@@ -861,9 +861,32 @@ let tileCount = 20;
         // 触摸滑动控制
         function setupTouchControls() {
             if (canvas) {
+                // 添加开发者模式触发 - 连续点击屏幕上方区域3次
+                let touchCount = 0;
+                let lastTouchTime = 0;
+                
                 canvas.addEventListener('touchstart', function(e) {
                     e.preventDefault();
                     const touch = e.touches[0];
+                    const rect = canvas.getBoundingClientRect();
+                    const y = touch.clientY - rect.top;
+                    
+                    // 如果点击屏幕上方1/4区域
+                    if (y < canvas.height / 4) {
+                        const currentTime = Date.now();
+                        if (currentTime - lastTouchTime < 500) {
+                            touchCount++;
+                        } else {
+                            touchCount = 1;
+                        }
+                        lastTouchTime = currentTime;
+                        
+                        if (touchCount >= 3 && !developerMode) {
+                            activateDeveloperMode();
+                            return;
+                        }
+                    }
+                    
                     touchStartX = touch.clientX;
                     touchStartY = touch.clientY;
                 }, { passive: false });
@@ -1297,8 +1320,9 @@ function moveSnake() {
             }
         }
         
-        // 检查自身碰撞
-        for (let segment of snake) {
+        // 检查自身碰撞 - 修复版本
+        for (let i = 1; i < snake.length; i++) { // 从索引1开始，跳过头部
+            const segment = snake[i];
             if (head.x === segment.x && head.y === segment.y) {
                 gameOverReason = '来福咬到了自己的尾巴';
                 gameOver(gameOverReason);
