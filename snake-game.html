@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐕 来福狗贪吃大作战</title>
+
+    <!-- PWA支持 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8B7EC8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="来福贪吃蛇">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+jishi        }
+
+        /* 装饰图片样式 */
+        .decoration-dog {
+pen'guonguo            position: absolute;
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 10px;
+            opacity: 0.8;
+            z-index: 1;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .decoration-dog:hover {
+            opacity: 1;
+        }
+        
+        /* 主菜单装饰 - 左边3张右边3张 */
+        .main-menu-decoration {
+            position: absolute;
+        }
+        
+        .dog1 {
+            top: 20px;
+            left: 20px;
+            width: 80px;
+            height: 60px;
+        }
+        
+        .dog2 {
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 60px;
+        }
+        
+        .dog4 {
+            top: 100px;
+            left: 20px;
+            width: 80px;
+            height: 60px;
+        }
+        
+        .dog5 {
+            top: 100px;
+            right: 20px;
+            width: 80px;
+            height: 60px;
+        }
+        
+        .dog6 {
+            top: 180px;
+            left: 20px;
+            width: 80px;
+            height: 60px;
+        }
+        
+        .dog7 {
+            top: 180px;
+            right: 20px;
+            width: 80px;
+            height: 60px;
+        }
+        
+        /* 关卡选择装饰 - 左边3张右边3张 */
+        .level-decoration {
+            position: absolute;
+        }
+        
+        .level-dog1 {
+            top: 15px;
+            left: 15px;
+            width: 75px;
+            height: 55px;
+        }
+        
+        .level-dog2 {
+            top: 15px;
+            right: 15px;
+            width: 75px;
+            height: 55px;
+        }
+        
+        .level-dog4 {
+            top: 90px;
+            left: 15px;
+            width: 75px;
+            height: 55px;
+        }
+        
+        .level-dog5 {
+            top: 90px;
+            right: 15px;
+            width: 75px;
+            height: 55px;
+        }
+        
+        .level-dog6 {
+            top: 165px;
+            left: 15px;
+            width: 75px;
+            height: 55px;
+        }
+        
+        .level-dog7 {
+            top: 165px;
+            right: 15px;
+            width: 75px;
+            height: 55px;
+        }
+        
+        /* 游戏界面装饰 - 左边3张右边3张 */
+        .game-decoration {
+            position: absolute;
+        }
+        
+        .game-dog1 {
+            top: 10px;
+            left: 10px;
+            width: 70px;
+            height: 50px;
+        }
+        
+        .game-dog2 {
+            top: 10px;
+            right: 10px;
+            width: 70px;
+            height: 50px;
+        }
+        
+        .game-dog4 {
+            top: 80px;
+            left: 10px;
+            width: 70px;
+            height: 50px;
+        }
+        
+        .game-dog5 {
+            top: 80px;
+            right: 10px;
+            width: 70px;
+            height: 50px;
+        }
+        
+        .game-dog6 {
+            top: 150px;
+            left: 10px;
+            width: 70px;
+            height: 50px;
+        }
+        
+        .game-dog7 {
+            top: 150px;
+            right: 10px;
+            width: 70px;
+            height: 50px;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .decoration-dog {
+                width: 50px;
+                height: 38px;
+            }
+            
+            .dog1, .dog2, .dog4, .dog5, .dog6, .dog7 {
+                width: 50px;
+                height: 38px;
+            }
+            
+            .dog4 { top: 80px; }
+            .dog5 { top: 80px; }
+            .dog6 { top: 140px; }
+            .dog7 { top: 140px; }
+            
+            .game-dog1, .game-dog2, .game-dog4, .game-dog5, .game-dog6, .game-dog7 {
+                width: 45px;
+                height: 35px;
+            }
+            
+            .game-dog4 { top: 65px; }
+            .game-dog5 { top: 65px; }
+            .game-dog6 { top: 120px; }
+            .game-dog7 { top: 120px; }
+            
+            .level-dog1, .level-dog2, .level-dog4, .level-dog5, .level-dog6, .level-dog7 {
+                width: 48px;
+                height: 36px;
+            }
+            
+            .level-dog4 { top: 70px; }
+            .level-dog5 { top: 70px; }
+            .level-dog6 { top: 125px; }
+            .level-dog7 { top: 125px; }
+        }
+        
+        .game-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* 主菜单样式 */
+        .main-menu {
+            color: white;
+        }
+        
+        .main-menu h2 {
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* 关卡选择界面样式 */
+        .level-select {
+            color: white;
+        }
+        
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .level-card {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .level-card:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .level-card.locked {
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .level-card.completed {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: rgba(0, 255, 0, 0.5);
+        }
+        
+        .level-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .level-name {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .level-status {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .lock-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+        }
+        
+        .star-rating {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            color: #FFD700;
+        }
+        
+        /* 游戏界面样式 */
+        .game-screen {
+            color: white;
+        }
+        
+        .level-info {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .score {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .target-score {
+            color: #FFD700;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .timer {
+            color: #FF6B6B;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        #gameCanvas {
+            border: 3px solid white;
+            border-radius: 10px;
+            background: #2c3e50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* 移动端控制按钮 */
+        .mobile-controls {
+            display: none;
+            margin: 15px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: block;
+            }
+        }
+        
+        .direction-pad {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 5px;
+            max-width: 150px;
+            margin: 0 auto 15px;
+        }
+        
+        .direction-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .direction-btn:active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+        
+        .direction-btn.up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        .direction-btn.left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        
+        .direction-btn.right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+        
+        .direction-btn.down {
+            grid-column: 2;
+            grid-row: 3;
+        }
+        
+        .controls {
+            margin-top: 15px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: clamp(12px, 3vw, 16px);
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+        }
+        
+        .btn:hover, .btn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .btn.primary {
+            background: rgba(0, 123, 255, 0.6);
+            border-color: #007bff;
+        }
+        
+        .btn.primary:hover, .btn.primary:active {
+            background: rgba(0, 123, 255, 0.8);
+        }
+        
+        .game-over, .level-complete {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .level-complete {
+            background: rgba(0, 128, 0, 0.9);
+        }
+        
+        .house-hint {
+            color: #FFD700;
+            font-size: clamp(12px, 3vw, 14px);
+            margin-top: 8px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+        
+        .debug {
+            color: #ccc;
+            font-size: clamp(10px, 2.5vw, 12px);
+            margin-top: 8px;
+        }
+        
+        .progress-info {
+            color: #FFD700;
+            font-size: clamp(12px, 3vw, 14px);
+            margin-bottom: 15px;
+        }
+        
+        .star-display {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        
+        .time-display {
+            color: #FFD700;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        
+        /* 触摸滑动控制提示 */
+        .touch-hint {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: clamp(10px, 2.5vw, 12px);
+            margin-top: 5px;
+        }
+        
+        @media (min-width: 769px) {
+            .touch-hint {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🐕 来福狗贪吃大作战</h1>
+        
+        <!-- 主菜单 -->
+        <div id="mainMenu" class="screen main-menu active">
+            <!-- 装饰图片 -->
+            <img src=".vercel/dog1.jpg.jpg" alt="" class="decoration-dog main-menu-decoration dog1">
+            <img src=".vercel/dog2.jpg.png" alt="" class="decoration-dog main-menu-decoration dog2">
+            <img src=".vercel/dog4.jpg.jpg" alt="" class="decoration-dog main-menu-decoration dog4">
+            <img src=".vercel/dog5.jpg.jpg" alt="" class="decoration-dog main-menu-decoration dog5">
+            <img src=".vercel/dog6.jpg.jpg" alt="" class="decoration-dog main-menu-decoration dog6">
+            <img src=".vercel/dog7.jpg.jpg" alt="" class="decoration-dog main-menu-decoration dog7">
+            
+            <h2>欢迎来到来福的冒险之旅！</h2>
+            <div class="progress-info">
+                已解锁关卡: <span id="unlockedLevels">1</span> / 5
+            </div>
+            <button class="btn primary" onclick="showLevelSelect()">选择关卡</button>
+            <button class="btn" onclick="startQuickGame()">快速开始</button>
+            <button class="btn" onclick="resetProgress()">重置进度</button>
+        </div>
+        
+        <!-- 关卡选择界面 -->
+        <div id="levelSelect" class="screen level-select">
+            <!-- 装饰图片 -->
+            <img src=".vercel/dog1.jpg.jpg" alt="" class="decoration-dog level-decoration level-dog1">
+            <img src=".vercel/dog2.jpg.png" alt="" class="decoration-dog level-decoration level-dog2">
+            <img src=".vercel/dog4.jpg.jpg" alt="" class="decoration-dog level-decoration level-dog4">
+            <img src=".vercel/dog5.jpg.jpg" alt="" class="decoration-dog level-decoration level-dog5">
+            <img src=".vercel/dog6.jpg.jpg" alt="" class="decoration-dog level-decoration level-dog6">
+            <img src=".vercel/dog7.jpg.jpg" alt="" class="decoration-dog level-decoration level-dog7">
+            
+            <h2>选择关卡</h2>
+            <div class="level-grid" id="levelGrid">
+                <!-- 关卡卡片将通过JavaScript动态生成 -->
+            </div>
+            <button class="btn" onclick="showMainMenu()">返回主菜单</button>
+        </div>
+        
+        <!-- 游戏界面 -->
+        <div id="gameScreen" class="screen game-screen">
+            <!-- 装饰图片 -->
+            <img src=".vercel/dog1.jpg.jpg" alt="" class="decoration-dog game-decoration game-dog1">
+            <img src=".vercel/dog2.jpg.png" alt="" class="decoration-dog game-decoration game-dog2">
+            <img src=".vercel/dog4.jpg.jpg" alt="" class="decoration-dog game-decoration game-dog4">
+            <img src=".vercel/dog5.jpg.jpg" alt="" class="decoration-dog game-decoration game-dog5">
+            <img src=".vercel/dog6.jpg.jpg" alt="" class="decoration-dog game-decoration game-dog6">
+            <img src=".vercel/dog7.jpg.jpg" alt="" class="decoration-dog game-decoration game-dog7">
+            
+            <div class="level-info">关卡 <span id="currentLevel">1</span> - <span id="levelName">新手村</span></div>
+            <div class="target-score">目标分数: <span id="targetScore">50</span></div>
+            <div class="score">得分: <span id="score">0</span></div>
+            <div class="timer">时间: <span id="timer">00:00</span></div>
+            <div id="houseHint" class="house-hint" style="display: none;">🏠 找到家并吃掉它通关！</div>
+            <div id="debugInfo" class="debug">状态: 准备就绪</div>
+            <canvas id="gameCanvas" width="320" height="320"></canvas>
+            
+            <!-- 移动端控制按钮 -->
+            <div class="mobile-controls">
+                <div class="direction-pad">
+                    <button class="direction-btn up" ontouchstart="changeDirection('up')" onclick="changeDirection('up')">↑</button>
+                    <button class="direction-btn left" ontouchstart="changeDirection('left')" onclick="changeDirection('left')">←</button>
+                    <button class="direction-btn right" ontouchstart="changeDirection('right')" onclick="changeDirection('right')">→</button>
+                    <button class="direction-btn down" ontouchstart="changeDirection('down')" onclick="changeDirection('down')">↓</button>
+                </div>
+                <div class="touch-hint">也可以在游戏区域滑动控制方向</div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" onclick="startGame()">开始游戏</button>
+                <button class="btn" onclick="pauseGame()">暂停/继续</button>
+                <button class="btn" onclick="showLevelSelect()">选择关卡</button>
+                <button class="btn" onclick="showMainMenu()">主菜单</button>
+            </div>
+        </div>
+        
+        <div class="game-over" id="gameOver">
+            <h2>游戏结束!</h2>
+            <p>最终得分: <span id="finalScore">0</span></p>
+            <div class="time-display">用时: <span id="finalTime">00:00</span></div>
+            <button class="btn" onclick="startGame()">重新开始</button>
+            <button class="btn" onclick="gameOverToLevelSelect()">选择关卡</button>
+        </div>
+        
+        <div class="level-complete" id="levelComplete">
+            <h2>🎉 关卡完成!</h2>
+            <p>恭喜通过 <span id="completedLevel"></span>!</p>
+            <p>得分: <span id="levelScore">0</span></p>
+            <div class="time-display">用时: <span id="completionTime">00:00</span></div>
+            <div class="star-display" id="starDisplay">⭐⭐⭐</div>
+            <div id="unlockMessage" style="display: none;">
+                <p style="color: #FFD700;">🎊 解锁新关卡！</p>
+            </div>
+            <button class="btn" onclick="nextLevel()">下一关</button>
+            <button class="btn" onclick="startGame()">重玩本关</button>
+            <button class="btn" onclick="levelCompleteToLevelSelect()">选择关卡</button>
+        </div>
+    </div>
+
+    <script>
+        // 注册Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(function(registration) {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // 全局变量
+        let canvas, ctx, scoreElement, gameOverElement, levelCompleteElement;
+        let finalScoreElement, currentLevelElement, levelNameElement, targetScoreElement;
+        let houseHintElement, debugInfo, timerElement;
+        
+        // 游戏配置
+        const gridSize = 16; // 移动端适配，稍微小一点
+        let tileCount = 20;
+        
+
+        
+        // 关卡配置
+        const levels = [
+            { name: "新手村", targetScore: 50, speed: 200, obstacles: [] }, // 移动端稍微慢一点
+            { name: "森林小径", targetScore: 100, speed: 180, obstacles: [{x: 5, y: 5}, {x: 15, y: 15}] },
+            { name: "山谷挑战", targetScore: 150, speed: 160, obstacles: [{x: 3, y: 8}, {x: 10, y: 10}, {x: 16, y: 5}, {x: 8, y: 16}] },
+            { name: "危险峡谷", targetScore: 200, speed: 140, obstacles: [{x: 2, y: 2}, {x: 17, y: 2}, {x: 2, y: 17}, {x: 17, y: 17}, {x: 10, y: 8}, {x: 8, y: 12}] },
+            { name: "终极试炼", targetScore: 250, speed: 120, obstacles: [{x: 1, y: 1}, {x: 18, y: 1}, {x: 1, y: 18}, {x: 18, y: 18}, {x: 9, y: 5}, {x: 11, y: 5}, {x: 5, y: 9}, {x: 15, y: 9}, {x: 9, y: 15}, {x: 11, y: 15}] }
+        ];
+        
+        // 游戏状态
+        let currentLevel = 0;
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 5, y: 5};
+        let house = null;
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let gameRunning = false;
+        let gamePaused = false;
+        let canSpawnHouse = false;
+        let gameLoopId = null;
+        let startTime = 0;
+        let gameTime = 0;
+        let timerInterval = null;
+        
+        // 触摸控制变量
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        
+        // 进度管理
+        let gameProgress = {
+            unlockedLevels: 1,
+            completedLevels: [],
+            levelStars: {} // 存储每个关卡的星级
+        };
+        
+        // 调试函数
+        function updateDebug(message) {
+            if (debugInfo) {
+                debugInfo.textContent = '状态: ' + message;
+            }
+            console.log('游戏状态:', message);
+        }
+        
+        // 进度保存和加载
+        function saveProgress() {
+            localStorage.setItem('snakeGameProgress', JSON.stringify(gameProgress));
+        }
+        
+        function loadProgress() {
+            const saved = localStorage.getItem('snakeGameProgress');
+            if (saved) {
+                gameProgress = JSON.parse(saved);
+                // 确保levelStars属性存在
+                if (!gameProgress.levelStars) {
+                    gameProgress.levelStars = {};
+                }
+            }
+            updateProgressDisplay();
+        }
+        
+        function updateProgressDisplay() {
+            const unlockedElement = document.getElementById('unlockedLevels');
+            if (unlockedElement) {
+                unlockedElement.textContent = gameProgress.unlockedLevels;
+            }
+        }
+        
+        function resetProgress() {
+            if (confirm('确定要重置所有进度吗？这将清除所有解锁的关卡。')) {
+                gameProgress = {
+                    unlockedLevels: 1,
+                    completedLevels: [],
+                    levelStars: {}
+                };
+                saveProgress();
+                updateProgressDisplay();
+                generateLevelGrid();
+                alert('进度已重置！');
+            }
+        }
+        
+        // 界面切换
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        function showMainMenu() {
+            showScreen('mainMenu');
+            updateProgressDisplay();
+        }
+        
+        function showLevelSelect() {
+            showScreen('levelSelect');
+            generateLevelGrid();
+        }
+        
+        function showGameScreen(levelIndex = 0) {
+            currentLevel = levelIndex;
+            showScreen('gameScreen');
+            updateLevelDisplay();
+            initGame();
+        }
+        
+        // 生成关卡选择网格
+        function generateLevelGrid() {
+            const grid = document.getElementById('levelGrid');
+            grid.innerHTML = '';
+            
+            levels.forEach((level, index) => {
+                const card = document.createElement('div');
+                card.className = 'level-card';
+                
+                const isUnlocked = index < gameProgress.unlockedLevels;
+                const isCompleted = gameProgress.completedLevels.includes(index);
+                
+                if (!isUnlocked) {
+                    card.classList.add('locked');
+                } else if (isCompleted) {
+                    card.classList.add('completed');
+                }
+                
+                card.innerHTML = `
+                    <div class="level-number">${index + 1}</div>
+                    <div class="level-name">${level.name}</div>
+                    <div class="level-status">目标: ${level.targetScore}分</div>
+                    ${!isUnlocked ? '<div class="lock-icon">🔒</div>' : ''}
+                    ${isCompleted ? `<div class="star-rating">${'⭐'.repeat(gameProgress.levelStars[index] || 0)}</div>` : ''}
+                `;
+                
+                if (isUnlocked) {
+                    card.addEventListener('click', () => {
+                        showGameScreen(index);
+                    });
+                    card.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        showGameScreen(index);
+                    });
+                }
+                
+                grid.appendChild(card);
+            });
+        }
+        
+        // 快速开始（从当前最高解锁关卡开始）
+        function startQuickGame() {
+            const lastUnlocked = Math.max(0, gameProgress.unlockedLevels - 1);
+            showGameScreen(lastUnlocked);
+        }
+        
+        // 移动端方向控制
+        function changeDirection(direction) {
+            if (!gameRunning || gamePaused) return;
+            
+            switch(direction) {
+                case 'up':
+                    if (dy !== 1) { dx = 0; dy = -1; }
+                    break;
+                case 'down':
+                    if (dy !== -1) { dx = 0; dy = 1; }
+                    break;
+                case 'left':
+                    if (dx !== 1) { dx = -1; dy = 0; }
+                    break;
+                case 'right':
+                    if (dx !== -1) { dx = 1; dy = 0; }
+                    break;
+            }
+        }
+        
+        // 触摸滑动控制
+        function setupTouchControls() {
+            if (canvas) {
+                canvas.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    touchStartX = touch.clientX;
+                    touchStartY = touch.clientY;
+                }, { passive: false });
+                
+                canvas.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    if (!gameRunning || gamePaused) return;
+                    
+                    const touch = e.changedTouches[0];
+                    touchEndX = touch.clientX;
+                    touchEndY = touch.clientY;
+                    
+                    const deltaX = touchEndX - touchStartX;
+                    const deltaY = touchEndY - touchStartY;
+                    const minSwipeDistance = 30;
+                    
+                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                        // 水平滑动
+                        if (Math.abs(deltaX) > minSwipeDistance) {
+                            if (deltaX > 0) {
+                                changeDirection('right');
+                            } else {
+                                changeDirection('left');
+                            }
+                        }
+                    } else {
+                        // 垂直滑动
+                        if (Math.abs(deltaY) > minSwipeDistance) {
+                            if (deltaY > 0) {
+                                changeDirection('down');
+                            } else {
+                                changeDirection('up');
+                            }
+                        }
+                    }
+                }, { passive: false });
+            }
+        }
+        
+        // 全局错误处理
+        window.addEventListener('error', function(e) {
+            console.error('全局错误:', e.error);
+            updateDebug('错误: ' + e.message);
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            initGame();
+            setupTouchControls();
+        });
+        
+        // 初始化游戏
+        function initGame() {
+    try {
+        updateDebug('初始化中...');
+        
+        // 获取DOM元素
+        canvas = document.getElementById('gameCanvas');
+        ctx = canvas.getContext('2d');
+        scoreElement = document.getElementById('score');
+        gameOverElement = document.getElementById('gameOver');
+        levelCompleteElement = document.getElementById('levelComplete');
+        finalScoreElement = document.getElementById('finalScore');
+        currentLevelElement = document.getElementById('currentLevel');
+        levelNameElement = document.getElementById('levelName');
+        targetScoreElement = document.getElementById('targetScore');
+        houseHintElement = document.getElementById('houseHint');
+        debugInfo = document.getElementById('debugInfo');
+        timerElement = document.getElementById('timer'); // 添加这一行
+        
+        if (!canvas || !ctx) {
+            throw new Error('无法获取Canvas元素');
+        }
+        
+        tileCount = canvas.width / gridSize;
+        
+        // 初始化游戏状态
+        updateLevelDisplay();
+        generateFood();
+        drawGame();
+        
+        updateDebug('初始化完成');
+        
+    } catch (error) {
+        console.error('游戏初始化失败:', error);
+        updateDebug('初始化失败: ' + error.message);
+    }
+        }
+        
+        // ... 其余函数保持不变 ...
+        // 更新关卡信息显示
+        function updateLevelDisplay() {
+            try {
+                const level = levels[currentLevel];
+                if (currentLevelElement) currentLevelElement.textContent = currentLevel + 1;
+                if (levelNameElement) levelNameElement.textContent = level.name;
+                if (targetScoreElement) targetScoreElement.textContent = level.targetScore;
+            } catch (error) {
+                console.error('更新关卡显示失败:', error);
+            }
+        }
+        
+        // 生成随机食物位置（避免角落和重复位置）
+        function generateFood() {
+            try {
+                let attempts = 0;
+                let newFood;
+                do {
+                    // 避免在边缘2格内生成食物
+                    newFood = {
+                        x: Math.floor(Math.random() * (tileCount - 4)) + 2,
+                        y: Math.floor(Math.random() * (tileCount - 4)) + 2
+                    };
+                    attempts++;
+                } while ((isPositionOccupied(newFood.x, newFood.y, true) || 
+                         (food && newFood.x === food.x && newFood.y === food.y)) && 
+                         attempts < 100);
+                
+                if (attempts >= 100) {
+                    // 寻找一个安全的备用位置
+                    for (let x = 2; x < tileCount - 2; x++) {
+                        for (let y = 2; y < tileCount - 2; y++) {
+                            if (!isPositionOccupied(x, y, true) && 
+                                !(food && x === food.x && y === food.y)) {
+                                newFood = {x: x, y: y};
+                                break;
+                            }
+                        }
+                        if (newFood) break;
+                    }
+                    if (!newFood) {
+                        newFood = {x: 5, y: 5}; // 最后的备用位置
+                    }
+                }
+                
+                food = newFood;
+                console.log('生成新食物位置:', food);
+                
+            } catch (error) {
+                console.error('生成食物失败:', error);
+                food = {x: 5, y: 5}; // 默认位置
+            }
+        }
+        
+        // 生成房子（避免角落）
+        function generateHouse() {
+            try {
+                if (!canSpawnHouse) return;
+                
+                let attempts = 0;
+                do {
+                    // 避免在边缘2格内生成房子
+                    house = {
+                        x: Math.floor(Math.random() * (tileCount - 4)) + 2,
+                        y: Math.floor(Math.random() * (tileCount - 4)) + 2
+                    };
+                    attempts++;
+                } while (isPositionOccupied(house.x, house.y) && attempts < 100);
+                
+                if (attempts >= 100) {
+                    house = {x: 3, y: 3}; // 备用位置
+                }
+                
+                if (houseHintElement) {
+                    houseHintElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('生成房子失败:', error);
+            }
+        }
+        
+        // 检查位置是否被占用
+        function isPositionOccupied(x, y, excludeCurrentFood = false) {
+            try {
+                // 检查蛇身
+                for (let segment of snake) {
+                    if (segment.x === x && segment.y === y) return true;
+                }
+                
+                // 检查障碍物
+                const level = levels[currentLevel];
+                if (level && level.obstacles) {
+                    for (let obstacle of level.obstacles) {
+                        if (obstacle.x === x && obstacle.y === y) return true;
+                    }
+                }
+                
+                // 检查食物（可选择排除当前食物位置）
+                if (!excludeCurrentFood && food && food.x === x && food.y === y) return true;
+                
+                // 检查房子
+                if (house && house.x === x && house.y === y) return true;
+                
+                return false;
+            } catch (error) {
+                console.error('检查位置占用失败:', error);
+                return false;
+            }
+        }
+        
+        // 绘制游戏元素
+        function drawGame() {
+            try {
+                if (!ctx || !canvas) return;
+                
+                // 清空画布
+                ctx.fillStyle = '#2c3e50';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制障碍物 - 大便emoji
+                const level = levels[currentLevel];
+                if (level && level.obstacles) {
+                    ctx.font = `${gridSize-2}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    for (let obstacle of level.obstacles) {
+                        ctx.fillText('💩', 
+                            obstacle.x * gridSize + gridSize/2, 
+                            obstacle.y * gridSize + gridSize/2
+                        );
+                    }
+                }
+                
+                // 绘制蛇身（除了头部和尾巴）
+                if (snake.length > 1) {
+                    for (let i = 1; i < snake.length - 1; i++) {
+                        const segment = snake[i];
+                        // 灰色蛇身
+                        ctx.fillStyle = '#808080';
+                        ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+                        
+                        // 添加黑色斑点
+                        ctx.fillStyle = '#000000';
+                        ctx.beginPath();
+                        ctx.arc(segment.x * gridSize + gridSize/3, segment.y * gridSize + gridSize/3, 1, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(segment.x * gridSize + 2*gridSize/3, segment.y * gridSize + 2*gridSize/3, 1, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                }
+                
+                // 绘制蛇尾（最后一个像素）- 灰色粗线
+                if (snake.length > 1) {
+                    const tail = snake[snake.length - 1];
+                    const beforeTail = snake[snake.length - 2];
+                    
+                    ctx.strokeStyle = '#808080';
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    
+                    // 计算尾巴方向
+                    const tailX = tail.x * gridSize + gridSize/2;
+                    const tailY = tail.y * gridSize + gridSize/2;
+                    const beforeTailX = beforeTail.x * gridSize + gridSize/2;
+                    const beforeTailY = beforeTail.y * gridSize + gridSize/2;
+                    
+                    // 绘制从尾巴中心向外延伸的线
+                    const dx = tailX - beforeTailX;
+                    const dy = tailY - beforeTailY;
+                    const length = Math.sqrt(dx*dx + dy*dy);
+                    const unitX = dx / length;
+                    const unitY = dy / length;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(tailX, tailY);
+                    ctx.lineTo(tailX + unitX * gridSize/2, tailY + unitY * gridSize/2);
+                    ctx.stroke();
+                }
+                
+                // 绘制来福的头部 - 灰色像素狗头
+                if (snake.length > 0) {
+                    const head = snake[0];
+                    const x = head.x * gridSize;
+                    const y = head.y * gridSize;
+                    
+                    // 狗头主体 - 灰色
+                    ctx.fillStyle = '#808080';
+                    ctx.fillRect(x + 2, y + 2, gridSize - 4, gridSize - 4);
+                    
+                    // 狗耳朵 - 深灰色
+                    ctx.fillStyle = '#606060';
+                    ctx.fillRect(x + 1, y + 1, 3, 4); // 左耳
+                    ctx.fillRect(x + gridSize - 4, y + 1, 3, 4); // 右耳
+                    
+                    // 狗眼睛 - 黑色
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(x + 4, y + 4, 2, 2); // 左眼
+                    ctx.fillRect(x + gridSize - 6, y + 4, 2, 2); // 右眼
+                    
+                    // 狗鼻子 - 黑色
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(x + gridSize/2 - 1, y + 7, 2, 2);
+                    
+                    // 狗嘴巴 - 深灰色线条
+                    ctx.fillStyle = '#404040';
+                    ctx.fillRect(x + gridSize/2 - 2, y + 10, 4, 1); // 嘴巴线
+                    
+                    // 狗鼻子到嘴巴的连线
+                    ctx.fillRect(x + gridSize/2, y + 9, 1, 1);
+                }
+                
+                // 绘制食物 - 香肠emoji
+                if (food) {
+                    ctx.font = `${gridSize-2}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🌭', 
+                        food.x * gridSize + gridSize/2, 
+                        food.y * gridSize + gridSize/2
+                    );
+                }
+                
+                // 绘制房子
+                if (house) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(house.x * gridSize, house.y * gridSize, gridSize - 2, gridSize - 2);
+                    
+                    // 绘制房子图标
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(house.x * gridSize + 2, house.y * gridSize + gridSize/2, gridSize - 4, gridSize/2 - 2);
+                    ctx.fillStyle = '#DC143C';
+                    ctx.beginPath();
+                    ctx.moveTo(house.x * gridSize + 1, house.y * gridSize + gridSize/2);
+                    ctx.lineTo(house.x * gridSize + gridSize/2, house.y * gridSize + 1);
+                    ctx.lineTo(house.x * gridSize + gridSize - 1, house.y * gridSize + gridSize/2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+            } catch (error) {
+                console.error('绘制游戏失败:', error);
+                updateDebug('绘制错误: ' + error.message);
+            }
+        }
+        
+        // 移动蛇
+function moveSnake() {
+    try {
+        if (dx === 0 && dy === 0) return;
+        
+        const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+        let gameOverReason = '';
+        
+        // 检查边界碰撞
+        if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+            gameOverReason = '来福撞到了墙，好痛';
+            gameOver(gameOverReason);
+            return;
+        }
+        
+        // 检查障碍物碰撞
+        const level = levels[currentLevel];
+        if (level && level.obstacles) {
+            for (let obstacle of level.obstacles) {
+                if (head.x === obstacle.x && head.y === obstacle.y) {
+                    gameOverReason = '来福吃了大便被妈妈打了一顿';
+                    gameOver(gameOverReason);
+                    return;
+                }
+            }
+        }
+        
+        // 检查自身碰撞
+        for (let segment of snake) {
+            if (head.x === segment.x && head.y === segment.y) {
+                gameOverReason = '来福咬到了自己的尾巴';
+                gameOver(gameOverReason);
+                return;
+            }
+        }
+        
+        snake.unshift(head);
+        
+        // 检查是否吃到房子（通关）
+        if (house && head.x === house.x && head.y === house.y) {
+            levelComplete();
+            return;
+        }
+        
+        // 检查是否吃到食物
+        if (food && head.x === food.x && head.y === food.y && !house) {
+            score += 10;
+            if (scoreElement) scoreElement.textContent = score;
+            
+            // 检查是否达到目标分数
+            if (score >= level.targetScore && !canSpawnHouse) {
+                canSpawnHouse = true;
+                generateHouse();
+                // 停止生成食物
+                food = null;
+            } else if (!canSpawnHouse) {
+                generateFood();
+            }
+        } else {
+            snake.pop();
+        }
+        
+    } catch (error) {
+        console.error('移动蛇失败:', error);
+        gameOver('游戏出现错误');
+    }
+}
+        
+        // 游戏结束
+function gameOver(reason = '游戏结束') {
+    try {
+        gameRunning = false;
+        if (gameLoopId) {
+            clearTimeout(gameLoopId);
+            gameLoopId = null;
+        }
+        // 停止计时器
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        
+        // 更新游戏结束界面的标题
+        const gameOverTitle = document.querySelector('#gameOver h2');
+        if (gameOverTitle) {
+            gameOverTitle.textContent = reason;
+        }
+        
+        if (finalScoreElement) finalScoreElement.textContent = score;
+        
+        // 更新最终时间显示
+        const finalTimeElement = document.getElementById('finalTime');
+        if (finalTimeElement && timerElement) {
+            finalTimeElement.textContent = timerElement.textContent;
+        }
+        
+        if (gameOverElement) gameOverElement.style.display = 'block';
+        updateDebug('游戏结束: ' + reason);
+    } catch (error) {
+        console.error('游戏结束处理失败:', error);
+    }
+}
+        
+        // 关卡完成
+        function levelComplete() {
+    try {
+        gameRunning = false;
+        if (gameLoopId) {
+            clearTimeout(gameLoopId);
+            gameLoopId = null;
+        }
+        // 停止计时器
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        
+        // 计算星级评定
+        const level = levels[currentLevel];
+        const targetTime = level.targetScore * 10; // 10秒 = 3星
+        let stars = 1;
+        if (gameTime <= targetTime) {
+            stars = 3;
+        } else if (gameTime <= targetTime * 2) {
+            stars = 2;
+        }
+        
+        // 保存最高星级
+        if (!gameProgress.levelStars[currentLevel] || gameProgress.levelStars[currentLevel] < stars) {
+            gameProgress.levelStars[currentLevel] = stars;
+        }
+        
+        // 更新进度
+        if (!gameProgress.completedLevels.includes(currentLevel)) {
+            gameProgress.completedLevels.push(currentLevel);
+        }
+        
+        // 解锁下一关
+        const nextLevelIndex = currentLevel + 1;
+        let isNewUnlock = false;
+        if (nextLevelIndex < levels.length && gameProgress.unlockedLevels <= nextLevelIndex) {
+            gameProgress.unlockedLevels = nextLevelIndex + 1;
+            isNewUnlock = true;
+        }
+        
+        saveProgress();
+        
+        // 显示完成界面
+        const completedLevelElement = document.getElementById('completedLevel');
+        const levelScoreElement = document.getElementById('levelScore');
+        const unlockMessage = document.getElementById('unlockMessage');
+        const starsElement = document.getElementById('levelStars');
+        
+        if (completedLevelElement) completedLevelElement.textContent = levels[currentLevel].name;
+        if (levelScoreElement) levelScoreElement.textContent = score;
+        
+        // 更新完成时间显示
+        const completionTimeElement = document.getElementById('completionTime');
+        if (completionTimeElement && timerElement) {
+            completionTimeElement.textContent = timerElement.textContent;
+        }
+        
+        if (unlockMessage) {
+            unlockMessage.style.display = isNewUnlock ? 'block' : 'none';
+        }
+        if (starsElement) {
+            starsElement.textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+        }
+        if (levelCompleteElement) levelCompleteElement.style.display = 'block';
+        
+        updateDebug('关卡完成');
+    } catch (error) {
+        console.error('关卡完成处理失败:', error);
+    }
+        }
+        
+        // 下一关
+        function nextLevel() {
+            try {
+                if (currentLevel < levels.length - 1) {
+                    currentLevel++;
+                    if (levelCompleteElement) levelCompleteElement.style.display = 'none';
+                    resetLevel();
+                } else {
+                    alert('🎉 恭喜您完成了所有关卡！来福成功回到了家！');
+                    showMainMenu();
+                }
+            } catch (error) {
+                console.error('下一关失败:', error);
+            }
+        }
+        
+        // 游戏主循环
+        function gameLoop() {
+            try {
+                if (!gameRunning || gamePaused) return;
+                
+                moveSnake();
+                drawGame();
+                
+                if (gameRunning) {
+                    const level = levels[currentLevel];
+                    gameLoopId = setTimeout(gameLoop, level.speed);
+                }
+            } catch (error) {
+                console.error('游戏循环错误:', error);
+                updateDebug('循环错误: ' + error.message);
+                gameOver();
+            }
+        }
+        
+        // 开始游戏
+        function startGame() {
+    try {
+        updateDebug('开始游戏...');
+        
+        if (gameRunning) return;
+        
+        // 清除之前的循环和计时器
+        if (gameLoopId) {
+            clearTimeout(gameLoopId);
+            gameLoopId = null;
+        }
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        
+        // 重置游戏状态
+        snake = [{x: 10, y: 10}];
+        dx = 1;
+        dy = 0;
+        score = 0;
+        if (scoreElement) scoreElement.textContent = score;
+        gameRunning = true;
+        gamePaused = false;
+        canSpawnHouse = false;
+        house = null;
+        
+        // 重置并启动计时器
+        startTime = Date.now();
+        gameTime = 0;
+        if (timerElement) timerElement.textContent = '00:00';
+        timerInterval = setInterval(updateTimer, 1000);
+        
+        // 隐藏弹窗
+        if (gameOverElement) gameOverElement.style.display = 'none';
+        if (levelCompleteElement) levelCompleteElement.style.display = 'none';
+        if (houseHintElement) houseHintElement.style.display = 'none';
+        
+        generateFood();
+        drawGame();
+        
+        updateDebug('游戏运行中');
+        gameLoop();
+        
+    } catch (error) {
+        console.error('开始游戏失败:', error);
+        updateDebug('开始失败: ' + error.message);
+    }
+        }
+        
+        // 重置关卡
+        function resetLevel() {
+            try {
+                gameRunning = false;
+                if (gameLoopId) {
+                    clearTimeout(gameLoopId);
+                    gameLoopId = null;
+                }
+                updateLevelDisplay();
+                startGame();
+            } catch (error) {
+                console.error('重置关卡失败:', error);
+            }
+        }
+        
+        // 暂停游戏
+        function pauseGame() {
+    try {
+        if (!gameRunning) return;
+        gamePaused = !gamePaused;
+        
+        if (gamePaused) {
+            // 暂停时停止计时器
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        } else {
+            // 继续时重新启动计时器
+            startTime = Date.now() - (gameTime * 1000);
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+        
+        updateDebug(gamePaused ? '游戏暂停' : '游戏继续');
+        if (!gamePaused) {
+            gameLoop();
+        }
+    } catch (error) {
+        console.error('暂停游戏失败:', error);
+    }
+        }
+        
+        // 键盘控制
+        document.addEventListener('keydown', function(e) {
+            try {
+                if (!gameRunning || gamePaused) return;
+                
+                switch(e.key) {
+                    case 'ArrowUp':
+                        if (dy !== 1) { dx = 0; dy = -1; }
+                        break;
+                    case 'ArrowDown':
+                        if (dy !== -1) { dx = 0; dy = 1; }
+                        break;
+                    case 'ArrowLeft':
+                        if (dx !== 1) { dx = -1; dy = 0; }
+                        break;
+                    case 'ArrowRight':
+                        if (dx !== -1) { dx = 1; dy = 0; }
+                        break;
+                    case ' ':
+                        e.preventDefault();
+                        pauseGame();
+                        break;
+                }
+            } catch (error) {
+                console.error('键盘控制失败:', error);
+            }
+        });
+        
+        // 页面加载完成后初始化游戏
+        window.addEventListener('load', function() {
+            try {
+                initGame();
+            } catch (error) {
+                console.error('页面加载初始化失败:', error);
+            }
+        });
+        
+        // 从游戏结束界面跳转到关卡选择
+        function gameOverToLevelSelect() {
+            try {
+                if (gameOverElement) gameOverElement.style.display = 'none';
+                showLevelSelect();
+            } catch (error) {
+                console.error('跳转到关卡选择失败:', error);
+            }
+        }
+        
+        // 从关卡完成界面跳转到关卡选择
+        function levelCompleteToLevelSelect() {
+            try {
+                if (levelCompleteElement) levelCompleteElement.style.display = 'none';
+                showLevelSelect();
+            } catch (error) {
+                console.error('跳转到关卡选择失败:', error);
+            }
+        }
+        
+        // 添加更新计时器函数
+function updateTimer() {
+    if (timerElement && gameRunning && !gamePaused) {
+        gameTime = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(gameTime / 60);
+        const seconds = gameTime % 60;
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+// 全局错误处理
+window.addEventListener('error', function(e) {
+    console.error('全局错误:', e.error);
+    updateDebug('发生错误: ' + e.message);
+});
+    </script>
+</body>
+</html>

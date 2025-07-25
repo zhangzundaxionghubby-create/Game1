@@ -1,0 +1,22 @@
+{
+  "name": "来福贪吃大冒险",
+  "short_name": "来福大冒险",
+  "description": "🐕 和可爱的来福一起踏上贪吃蛇大冒险！这是一款充满趣味的经典贪吃蛇游戏，拥有多个精心设计的关卡和挑战。控制来福在游戏世界中收集食物，避开障碍，不断成长壮大。简单易上手的操作，丰富多样的关卡设计，让你在休闲时光中享受无穷乐趣。快来和来福一起开始这场美味的冒险之旅吧！",
+  "start_url": "./snake-game.html",
+  "display": "standalone",
+  "background_color": "#8B7EC8",
+  "theme_color": "#8B7EC8",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
