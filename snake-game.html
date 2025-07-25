@@ -631,37 +631,45 @@ pen'guonguo            position: absolute;
     </div>
 
     <script>
-        // 注册Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(function(registration) {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch(function(registrationError) {
-                        console.log('SW registration failed: ', registrationError);
-                    });
+// 注册Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js')
+            .then(function(registration) {
+                console.log('SW registered: ', registration);
+            })
+            .catch(function(registrationError) {
+                console.log('SW registration failed: ', registrationError);
             });
-        }
+    });
+}
 
         // 全局变量
-        let canvas, ctx, scoreElement, gameOverElement, levelCompleteElement;
-        let finalScoreElement, currentLevelElement, levelNameElement, targetScoreElement;
-        let houseHintElement, debugInfo, timerElement;
-        
-        // 游戏配置
-        const gridSize = 16; // 移动端适配，稍微小一点
-        let tileCount = 20;
-        
+let canvas, ctx, scoreElement, gameOverElement, levelCompleteElement;
+let finalScoreElement, currentLevelElement, levelNameElement, targetScoreElement;
+let houseHintElement, debugInfo, timerElement;
+let developerMode = false;
+let upKeyPressCount = 0;
+let lastUpKeyTime = 0;
+let manualMode = false; // 手动控制模式
 
+// 动态大便掉落系统（隐藏关卡专用）
+let fallingPoop = []; // 掉落的大便数组
+let lastPoopDropTime = 0; // 上次掉落时间
+let poopDropInterval = 3000; // 掉落间隔（3秒）
         
-        // 关卡配置
+// 游戏配置
+const gridSize = 16;
+let tileCount = 20;
+
+// 关卡配置
         const levels = [
-            { name: "新手村", targetScore: 50, speed: 200, obstacles: [] }, // 移动端稍微慢一点
-            { name: "森林小径", targetScore: 100, speed: 180, obstacles: [{x: 5, y: 5}, {x: 15, y: 15}] },
-            { name: "山谷挑战", targetScore: 150, speed: 160, obstacles: [{x: 3, y: 8}, {x: 10, y: 10}, {x: 16, y: 5}, {x: 8, y: 16}] },
+            { name: "新手村", targetScore: 50, speed: 200, obstacles: [] },
+            { name: "森林探险", targetScore: 80, speed: 180, obstacles: [{x: 5, y: 5}, {x: 15, y: 15}] },
+            { name: "城市迷宫", targetScore: 120, speed: 160, obstacles: [{x: 3, y: 8}, {x: 10, y: 10}, {x: 16, y: 5}] },
             { name: "危险峡谷", targetScore: 200, speed: 140, obstacles: [{x: 2, y: 2}, {x: 17, y: 2}, {x: 2, y: 17}, {x: 17, y: 17}, {x: 10, y: 8}, {x: 8, y: 12}] },
-            { name: "终极试炼", targetScore: 250, speed: 120, obstacles: [{x: 1, y: 1}, {x: 18, y: 1}, {x: 1, y: 18}, {x: 18, y: 18}, {x: 9, y: 5}, {x: 11, y: 5}, {x: 5, y: 9}, {x: 15, y: 9}, {x: 9, y: 15}, {x: 11, y: 15}] }
+            { name: "终极试炼", targetScore: 250, speed: 120, obstacles: [{x: 1, y: 1}, {x: 18, y: 1}, {x: 1, y: 18}, {x: 18, y: 18}, {x: 9, y: 5}, {x: 11, y: 5}, {x: 5, y: 9}, {x: 15, y: 9}, {x: 9, y: 15}, {x: 11, y: 15}] },
+            { name: "👩 妈妈的追击", targetScore: 300, speed: 100, obstacles: [], isHidden: true, isInfinite: true }, // 隐藏关卡 - 无边界模式
         ];
         
         // 游戏状态
@@ -679,6 +687,13 @@ pen'guonguo            position: absolute;
         let startTime = 0;
         let gameTime = 0;
         let timerInterval = null;
+        
+        
+        // 妈妈角色相关变量（隐藏关卡专用）
+        let mama = null; // 妈妈的位置
+        let mamaDirection = {x: 0, y: 0}; // 妈妈的移动方向
+        let mamaLastMoveTime = 0; // 妈妈上次移动时间
+        let mamaSpeed = 200; // 妈妈移动间隔（蛇速度的2倍）
         
         // 触摸控制变量
         let touchStartX = 0;
@@ -751,10 +766,10 @@ pen'guonguo            position: absolute;
             showScreen('mainMenu');
             updateProgressDisplay();
         }
-        
         function showLevelSelect() {
             showScreen('levelSelect');
             generateLevelGrid();
+            setupUnlockMode(); // 添加这行
         }
         
         function showGameScreen(levelIndex = 0) {
@@ -770,6 +785,11 @@ pen'guonguo            position: absolute;
             grid.innerHTML = '';
             
             levels.forEach((level, index) => {
+                // 隐藏关卡只有在第五关完成后才显示
+                if (level.isHidden && !gameProgress.completedLevels.includes(4)) {
+                    return; // 跳过隐藏关卡
+                }
+                
                 const card = document.createElement('div');
                 card.className = 'level-card';
                 
@@ -782,12 +802,20 @@ pen'guonguo            position: absolute;
                     card.classList.add('completed');
                 }
                 
+                // 为隐藏关卡添加特殊样式
+                if (level.isHidden) {
+                    card.classList.add('hidden-level');
+                    card.style.background = 'linear-gradient(135deg, #FF69B4, #FF1493)';
+                    card.style.border = '2px solid #FFD700';
+                }
+                
                 card.innerHTML = `
-                    <div class="level-number">${index + 1}</div>
+                    <div class="level-number">${level.isHidden ? '👩' : index + 1}</div>
                     <div class="level-name">${level.name}</div>
                     <div class="level-status">目标: ${level.targetScore}分</div>
                     ${!isUnlocked ? '<div class="lock-icon">🔒</div>' : ''}
                     ${isCompleted ? `<div class="star-rating">${'⭐'.repeat(gameProgress.levelStars[index] || 0)}</div>` : ''}
+                    ${level.isHidden ? '<div class="hidden-badge">隐藏关卡</div>' : ''}
                 `;
                 
                 if (isUnlocked) {
@@ -881,12 +909,7 @@ pen'guonguo            position: absolute;
             updateDebug('错误: ' + e.message);
         });
         
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProgress();
-            initGame();
-            setupTouchControls();
-        });
+
         
         // 初始化游戏
         function initGame() {
@@ -916,6 +939,7 @@ pen'guonguo            position: absolute;
         // 初始化游戏状态
         updateLevelDisplay();
         generateFood();
+        initMama();
         drawGame();
         
         updateDebug('初始化完成');
@@ -1060,6 +1084,24 @@ pen'guonguo            position: absolute;
                     }
                 }
                 
+                // 绘制妈妈角色（在隐藏关卡中）
+                if (mama && currentLevel === 5) {
+                    ctx.font = `${gridSize-2}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('👩', 
+                        mama.x * gridSize + gridSize/2, 
+                        mama.y * gridSize + gridSize/2
+                    );
+                    
+                    // 添加追击效果（红色光环）
+                    ctx.strokeStyle = '#FF1493';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(mama.x * gridSize + gridSize/2, mama.y * gridSize + gridSize/2, gridSize/2 + 2, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+                
                 // 绘制蛇身（除了头部和尾巴）
                 if (snake.length > 1) {
                     for (let i = 1; i < snake.length - 1; i++) {
@@ -1166,6 +1208,37 @@ pen'guonguo            position: absolute;
                     ctx.closePath();
                     ctx.fill();
                 }
+
+                // 绘制妈妈角色（在隐藏关卡中）
+                if (mama && currentLevel === 5) {
+                    ctx.font = `${gridSize-2}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('👩', 
+                        mama.x * gridSize + gridSize/2, 
+                        mama.y * gridSize + gridSize/2
+                    );
+                    
+                    // 添加追击效果（红色光环）
+                    ctx.strokeStyle = '#FF1493';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(mama.x * gridSize + gridSize/2, mama.y * gridSize + gridSize/2, gridSize/2 + 2, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+
+                // 绘制掉落的大便（隐藏关卡）
+                if (currentLevel === 5 && fallingPoop.length > 0) {
+                    ctx.font = `${gridSize-2}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    for (let poop of fallingPoop) {
+                        ctx.fillText('💩', 
+                            poop.x * gridSize + gridSize/2, 
+                            poop.y * gridSize + gridSize/2
+                        );
+                    }
+                }
                 
             } catch (error) {
                 console.error('绘制游戏失败:', error);
@@ -1182,20 +1255,44 @@ function moveSnake() {
         let gameOverReason = '';
         
         // 检查边界碰撞
-        if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-            gameOverReason = '来福撞到了墙，好痛';
-            gameOver(gameOverReason);
-            return;
+        const level = levels[currentLevel];
+        if (level && level.isInfinite) {
+            // 无边界模式：穿越边界
+            if (head.x < 0) head.x = tileCount - 1;
+            if (head.x >= tileCount) head.x = 0;
+            if (head.y < 0) head.y = tileCount - 1;
+            if (head.y >= tileCount) head.y = 0;
+        } else {
+            // 普通模式：撞墙游戏结束
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                gameOverReason = '来福撞到了墙，好痛';
+                gameOver(gameOverReason);
+                return;
+            }
         }
         
         // 检查障碍物碰撞
-        const level = levels[currentLevel];
         if (level && level.obstacles) {
             for (let obstacle of level.obstacles) {
                 if (head.x === obstacle.x && head.y === obstacle.y) {
-                    gameOverReason = '来福吃了大便被妈妈打了一顿';
-                    gameOver(gameOverReason);
-                    return;
+                    if (currentLevel === 5) {
+                        // 隐藏关卡：吃大便减长度
+                        if (snake.length > 1) {
+                            snake.pop(); // 减少一节身体
+                            snake.pop(); // 再减少一节（因为后面会unshift添加头部）
+                            updateDebug('来福吃了大便，身体变短了！');
+                        } else {
+                            // 只剩头部时游戏结束
+                            gameOverReason = '来福只剩头部还吃大便，被妈妈抓住了！';
+                            gameOver(gameOverReason);
+                            return;
+                        }
+                    } else {
+                        // 其他关卡：直接游戏结束
+                        gameOverReason = '来福吃了大便被妈妈打了一顿';
+                        gameOver(gameOverReason);
+                        return;
+                    }
                 }
             }
         }
@@ -1309,11 +1406,20 @@ function gameOver(reason = '游戏结束') {
         if (!gameProgress.completedLevels.includes(currentLevel)) {
             gameProgress.completedLevels.push(currentLevel);
         }
-        
-        // 解锁下一关
+
+        // 解锁下一关逻辑
         const nextLevelIndex = currentLevel + 1;
         let isNewUnlock = false;
-        if (nextLevelIndex < levels.length && gameProgress.unlockedLevels <= nextLevelIndex) {
+        let isHiddenUnlock = false;
+        
+        // 特殊处理：第五关（索引4）通关后解锁隐藏关卡第六关（索引5）
+        if (currentLevel === 4 && !gameProgress.completedLevels.includes(5)) {
+            isHiddenUnlock = true;
+            if (gameProgress.unlockedLevels <= 5) {
+                gameProgress.unlockedLevels = 6;
+                isNewUnlock = true;
+            }
+        } else if (nextLevelIndex < levels.length && !levels[nextLevelIndex].isHidden && gameProgress.unlockedLevels <= nextLevelIndex) {
             gameProgress.unlockedLevels = nextLevelIndex + 1;
             isNewUnlock = true;
         }
@@ -1324,7 +1430,7 @@ function gameOver(reason = '游戏结束') {
         const completedLevelElement = document.getElementById('completedLevel');
         const levelScoreElement = document.getElementById('levelScore');
         const unlockMessage = document.getElementById('unlockMessage');
-        const starsElement = document.getElementById('levelStars');
+        const starsElement = document.getElementById('starDisplay');
         
         if (completedLevelElement) completedLevelElement.textContent = levels[currentLevel].name;
         if (levelScoreElement) levelScoreElement.textContent = score;
@@ -1336,8 +1442,17 @@ function gameOver(reason = '游戏结束') {
         }
         
         if (unlockMessage) {
-            unlockMessage.style.display = isNewUnlock ? 'block' : 'none';
+            if (isHiddenUnlock) {
+                unlockMessage.innerHTML = '<p style="color: #FF69B4;">🎊 解锁隐藏关卡：妈妈的追击！</p>';
+                unlockMessage.style.display = 'block';
+            } else if (isNewUnlock) {
+                unlockMessage.innerHTML = '<p style="color: #FFD700;">🎊 解锁新关卡！</p>';
+                unlockMessage.style.display = 'block';
+            } else {
+                unlockMessage.style.display = 'none';
+            }
         }
+        
         if (starsElement) {
             starsElement.textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
         }
@@ -1366,23 +1481,177 @@ function gameOver(reason = '游戏结束') {
         }
         
         // 游戏主循环
-        function gameLoop() {
-            try {
-                if (!gameRunning || gamePaused) return;
-                
-                moveSnake();
-                drawGame();
-                
-                if (gameRunning) {
-                    const level = levels[currentLevel];
-                    gameLoopId = setTimeout(gameLoop, level.speed);
-                }
-            } catch (error) {
-                console.error('游戏循环错误:', error);
-                updateDebug('循环错误: ' + error.message);
-                gameOver();
+function gameLoop() {
+    try {
+        if (!gameRunning || gamePaused || developerMode) return; // 开发者模式下不自动循环
+        
+        moveSnake();
+        moveMama();
+        dropPoop();
+        updateFallingPoop();
+        drawGame();
+        
+        if (gameRunning && !developerMode) {
+            const level = levels[currentLevel];
+            gameLoopId = setTimeout(gameLoop, level.speed);
+        }
+    } catch (error) {
+        console.error('游戏循环错误:', error);
+        updateDebug('循环错误: ' + error.message);
+        gameOver();
+    }
+}
+
+// 激活开发者模式
+function activateDeveloperMode() {
+    try {
+        developerMode = true;
+        manualMode = true;
+        
+        // 清除所有障碍物
+        const level = levels[currentLevel];
+        if (level && level.obstacles) {
+            level.obstacles = []; // 清空障碍物数组
+        }
+        
+        // 停止自动游戏循环
+        if (gameLoopId) {
+            clearTimeout(gameLoopId);
+            gameLoopId = null;
+        }
+        
+        // 重新绘制游戏（不显示障碍物）
+        drawGame();
+        
+        // 显示开发者模式提示
+        updateDebug('🔧 开发者模式已激活！所有大便已清除，使用方向键手动控制来福。按ESC退出开发者模式。');
+        
+        // 可选：在屏幕上显示开发者模式标识
+        showDeveloperModeIndicator();
+        
+        console.log('开发者模式已激活');
+    } catch (error) {
+        console.error('激活开发者模式失败:', error);
+    }
+}
+
+// 退出开发者模式
+function deactivateDeveloperMode() {
+    try {
+        developerMode = false;
+        manualMode = false;
+        upKeyPressCount = 0;
+        
+        // 恢复原始障碍物（重新加载关卡）
+        const originalLevel = levels[currentLevel];
+        // 这里需要从原始关卡数据恢复障碍物
+        // 假设我们有原始关卡数据的备份
+        resetLevel(); // 重置关卡会恢复所有原始设置
+        
+        updateDebug('开发者模式已退出，游戏恢复正常');
+        hideDeveloperModeIndicator();
+        
+        console.log('开发者模式已退出');
+    } catch (error) {
+        console.error('退出开发者模式失败:', error);
+    }
+}
+
+// 手动移动蛇（一步一步）
+function manualMoveSnake() {
+    try {
+        if (!developerMode || !gameRunning || gamePaused) return;
+        
+        const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+        
+        // 检查边界碰撞
+        if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+            updateDebug('来福撞到了墙壁');
+            return; // 开发者模式下不会游戏结束
+        }
+        
+        // 检查自身碰撞（开发者模式下可以选择忽略）
+        for (let segment of snake) {
+            if (head.x === segment.x && head.y === segment.y) {
+                updateDebug('来福撞到了自己');
+                return; // 或者可以选择忽略这个碰撞
             }
         }
+        
+        snake.unshift(head);
+        
+        // 检查是否吃到房子（通关）
+        if (house && head.x === house.x && head.y === house.y) {
+            levelComplete();
+            return;
+        }
+        
+        // 检查是否吃到食物
+        if (food && head.x === food.x && head.y === food.y && !house) {
+            score += 10;
+            if (scoreElement) scoreElement.textContent = score;
+            
+            // 检查是否达到目标分数
+            const level = levels[currentLevel];
+            if (score >= level.targetScore && !canSpawnHouse) {
+                canSpawnHouse = true;
+                generateHouse();
+                food = null;
+            } else if (!canSpawnHouse) {
+                generateFood();
+            }
+        } else {
+            snake.pop();
+        }
+        
+        // 重新绘制游戏
+        drawGame();
+        
+    } catch (error) {
+        console.error('手动移动失败:', error);
+    }
+}
+
+// 显示开发者模式指示器
+function showDeveloperModeIndicator() {
+    try {
+        // 在游戏界面添加开发者模式标识
+        let indicator = document.getElementById('developerModeIndicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'developerModeIndicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                background: rgba(255, 0, 0, 0.8);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 12px;
+                z-index: 1000;
+                font-family: Arial, sans-serif;
+            `;
+            indicator.textContent = '🔧 开发者模式';
+            document.body.appendChild(indicator);
+        }
+        indicator.style.display = 'block';
+    } catch (error) {
+        console.error('显示开发者模式指示器失败:', error);
+    }
+}
+
+// 隐藏开发者模式指示器
+function hideDeveloperModeIndicator() {
+    try {
+        const indicator = document.getElementById('developerModeIndicator');
+        if (indicator) {
+            indicator.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('隐藏开发者模式指示器失败:', error);
+    }
+}
         
         // 开始游戏
         function startGame() {
@@ -1399,6 +1668,11 @@ function gameOver(reason = '游戏结束') {
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
+        }
+
+        // 隐藏关卡剧情提示
+        if (currentLevel === 5) {
+            alert('🐕 来福背着妈妈跑了出来，不要让妈妈抓到，这回来福可以吃大便了，妈妈再也管不着咯！');
         }
         
         // 重置游戏状态
@@ -1478,41 +1752,166 @@ function gameOver(reason = '游戏结束') {
         }
         
         // 键盘控制
-        document.addEventListener('keydown', function(e) {
-            try {
-                if (!gameRunning || gamePaused) return;
-                
-                switch(e.key) {
-                    case 'ArrowUp':
-                        if (dy !== 1) { dx = 0; dy = -1; }
-                        break;
-                    case 'ArrowDown':
-                        if (dy !== -1) { dx = 0; dy = 1; }
-                        break;
-                    case 'ArrowLeft':
-                        if (dx !== 1) { dx = -1; dy = 0; }
-                        break;
-                    case 'ArrowRight':
-                        if (dx !== -1) { dx = 1; dy = 0; }
-                        break;
-                    case ' ':
-                        e.preventDefault();
-                        pauseGame();
-                        break;
-                }
-            } catch (error) {
-                console.error('键盘控制失败:', error);
+document.addEventListener('keydown', function(e) {
+    try {
+        // 开发者模式检测 - 连续按3次上键
+        if (e.key === 'ArrowUp') {
+            const currentTime = Date.now();
+            if (currentTime - lastUpKeyTime < 500) { // 500ms内连续按键
+                upKeyPressCount++;
+            } else {
+                upKeyPressCount = 1; // 重置计数
             }
-        });
+            lastUpKeyTime = currentTime;
+            
+            // 检查是否达到3次
+            if (upKeyPressCount >= 3 && !developerMode) {
+                activateDeveloperMode();
+                return;
+            }
+        } else {
+            upKeyPressCount = 0; // 按其他键重置计数
+        }
         
-        // 页面加载完成后初始化游戏
-        window.addEventListener('load', function() {
-            try {
-                initGame();
-            } catch (error) {
-                console.error('页面加载初始化失败:', error);
+        // 开发者模式下的手动控制
+        if (developerMode && gameRunning && !gamePaused) {
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (dy !== 1) { 
+                        dx = 0; dy = -1;
+                        manualMoveSnake(); // 手动移动一步
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (dy !== -1) { 
+                        dx = 0; dy = 1;
+                        manualMoveSnake();
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (dx !== 1) { 
+                        dx = -1; dy = 0;
+                        manualMoveSnake();
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (dx !== -1) { 
+                        dx = 1; dy = 0;
+                        manualMoveSnake();
+                    }
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    pauseGame();
+                    break;
+                case 'Escape': // ESC键退出开发者模式
+                    deactivateDeveloperMode();
+                    break;
+            }
+            return;
+        }
+        
+        // 普通模式的控制（原有逻辑）
+        if (!gameRunning || gamePaused) return;
+        
+        switch(e.key) {
+            case 'ArrowUp':
+                if (dy !== 1) { dx = 0; dy = -1; }
+                break;
+            case 'ArrowDown':
+                if (dy !== -1) { dx = 0; dy = 1; }
+                break;
+            case 'ArrowLeft':
+                if (dx !== 1) { dx = -1; dy = 0; }
+                break;
+            case 'ArrowRight':
+                if (dx !== -1) { dx = 1; dy = 0; }
+                break;
+            case ' ':
+                e.preventDefault();
+                pauseGame();
+                break;
+        }
+    } catch (error) {
+        console.error('键盘控制失败:', error);
+    }
+});
+        
+        // 解锁关卡功能
+let rightClickCount = 0;
+let lastRightClickTime = 0;
+let unlockModeActive = false;
+
+// 添加右键事件监听器到关卡选择页面
+function setupUnlockMode() {
+    const levelGrid = document.getElementById('levelGrid');
+    if (levelGrid) {
+        levelGrid.addEventListener('contextmenu', function(e) {
+            e.preventDefault(); // 阻止默认右键菜单
+            
+            const now = Date.now();
+            if (now - lastRightClickTime < 1000) { // 1秒内的连续点击
+                rightClickCount++;
+            } else {
+                rightClickCount = 1; // 重置计数
+            }
+            lastRightClickTime = now;
+            
+            if (rightClickCount >= 3 && !unlockModeActive) {
+                unlockModeActive = true;
+                // 解锁所有关卡
+                gameProgress.unlockedLevels = levels.length;
+                for (let i = 0; i < levels.length; i++) {
+                    if (!gameProgress.completedLevels.includes(i)) {
+                        gameProgress.completedLevels.push(i);
+                    }
+                    gameProgress.levelStars[i] = 3; // 给所有关卡3星
+                }
+                saveProgress();
+                generateLevelGrid(); // 重新生成关卡网格
+                
+                // 添加解锁模式指示器
+                let unlockIndicator = document.getElementById('unlockModeIndicator');
+                if (!unlockIndicator) {
+                    unlockIndicator = document.createElement('div');
+                    unlockIndicator.id = 'unlockModeIndicator';
+                    unlockIndicator.style.cssText = `
+                        position: fixed;
+                        top: 50px;
+                        right: 10px;
+                        background: rgba(255, 215, 0, 0.9);
+                        color: black;
+                        padding: 8px 12px;
+                        border-radius: 8px;
+                        font-size: 14px;
+                        z-index: 1000;
+                        font-family: Arial, sans-serif;
+                        border: 2px solid #FFD700;
+                    `;
+                    unlockIndicator.textContent = '🔓 解锁模式';
+                    document.body.appendChild(unlockIndicator);
+                }
+                unlockIndicator.style.display = 'block';
+                
+                alert('🎊 解锁模式已激活！所有关卡现在都可以游玩了！');
+                rightClickCount = 0; // 重置计数
             }
         });
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        loadProgress();
+        initGame();
+        setupTouchControls();
+        setupUnlockMode(); // 设置解锁模式
+        updateProgressDisplay(); // 确保进度显示正确
+    } catch (error) {
+        console.error('页面初始化失败:', error);
+    }
+});
         
         // 从游戏结束界面跳转到关卡选择
         function gameOverToLevelSelect() {
@@ -1544,11 +1943,195 @@ function updateTimer() {
     }
 }
 
+// 初始化妈妈角色（仅在隐藏关卡）
+        function initMama() {
+            try {
+                if (currentLevel !== 5) { // 只在第六关（隐藏关卡）出现
+                    mama = null;
+                    return;
+                }
+                
+                // 在地图角落随机生成妈妈
+                const corners = [
+                    {x: 1, y: 1},
+                    {x: tileCount - 2, y: 1},
+                    {x: 1, y: tileCount - 2},
+                    {x: tileCount - 2, y: tileCount - 2}
+                ];
+                
+                let attempts = 0;
+                do {
+                    mama = corners[Math.floor(Math.random() * corners.length)];
+                    attempts++;
+                } while (isPositionOccupied(mama.x, mama.y) && attempts < 10);
+                
+                mamaDirection = {x: 0, y: 0};
+                mamaLastMoveTime = Date.now();
+                const level = levels[currentLevel];
+                mamaSpeed = level.speed * 2; // 妈妈速度是蛇的一半
+                
+                console.log('妈妈已生成在位置:', mama);
+            } catch (error) {
+                console.error('初始化妈妈失败:', error);
+            }
+        }
+        
+        // 妈妈AI移动逻辑
+        function moveMama() {
+            try {
+                if (!mama || currentLevel !== 5 || !gameRunning || gamePaused) return;
+                
+                const now = Date.now();
+                if (now - mamaLastMoveTime < mamaSpeed) return;
+                
+                const snakeHead = snake[0];
+                let targetX = snakeHead.x;
+                let targetY = snakeHead.y;
+                
+                // 添加随机性：30%概率随机移动，70%概率追击
+                if (Math.random() < 0.3) {
+                    // 随机移动
+                    const directions = [
+                        {x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y: 1}
+                    ];
+                    const randomDir = directions[Math.floor(Math.random() * directions.length)];
+                    targetX = mama.x + randomDir.x;
+                    targetY = mama.y + randomDir.y;
+                } else {
+                    // 智能追击：向蛇头方向移动，但不直奔
+                    const dx = snakeHead.x - mama.x;
+                    const dy = snakeHead.y - mama.y;
+                    
+                    // 添加一些随机偏移，避免过于直接
+                    const randomOffset = Math.random() * 0.4 - 0.2; // -0.2 到 0.2 的随机偏移
+                    
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        // 主要在X方向移动
+                        mamaDirection.x = dx > 0 ? 1 : -1;
+                        mamaDirection.y = Math.random() < 0.3 ? (Math.random() < 0.5 ? 1 : -1) : 0;
+                    } else {
+                        // 主要在Y方向移动
+                        mamaDirection.y = dy > 0 ? 1 : -1;
+                        mamaDirection.x = Math.random() < 0.3 ? (Math.random() < 0.5 ? 1 : -1) : 0;
+                    }
+                    
+                    targetX = mama.x + mamaDirection.x;
+                    targetY = mama.y + mamaDirection.y;
+                }
+                
+                // 检查边界和碰撞
+                if (targetX >= 0 && targetX < tileCount && 
+                    targetY >= 0 && targetY < tileCount && 
+                    !isPositionOccupiedByObstacle(targetX, targetY)) {
+                    
+                    mama.x = targetX;
+                    mama.y = targetY;
+                    
+                    // 检查是否碰到蛇头
+                    if (mama.x === snakeHead.x && mama.y === snakeHead.y) {
+                        gameOver('妈妈抓到了来福！');
+                        return;
+                    }
+                }
+                
+                mamaLastMoveTime = now;
+            } catch (error) {
+                console.error('妈妈移动失败:', error);
+            }
+        }
+        
+        // 检查位置是否被障碍物占用（妈妈专用，不检查蛇身和食物）
+        function isPositionOccupiedByObstacle(x, y) {
+            try {
+                const level = levels[currentLevel];
+                if (level && level.obstacles) {
+                    for (let obstacle of level.obstacles) {
+                        if (obstacle.x === x && obstacle.y === y) return true;
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.error('检查障碍物占用失败:', error);
+                return false;
+            }
+        }
+
+
+
+        
+
+        // 生成掉落大便
+function dropPoop() {
+    try {
+        if (currentLevel !== 5 || !gameRunning) return;
+        
+        const now = Date.now();
+        if (now - lastPoopDropTime < poopDropInterval) return;
+        
+        // 从顶部随机位置开始掉落
+        const x = Math.floor(Math.random() * tileCount);
+        const newPoop = {x: x, y: 0, falling: true};
+        
+        // 确保不与蛇头重叠
+        if (snake[0].x !== x || snake[0].y !== 0) {
+            fallingPoop.push(newPoop);
+            lastPoopDropTime = now;
+        }
+    } catch (error) {
+        console.error('掉落大便失败:', error);
+    }
+}
+
+// 更新掉落大便位置
+function updateFallingPoop() {
+    try {
+        if (currentLevel !== 5 || !gameRunning) return;
+        
+        for (let i = fallingPoop.length - 1; i >= 0; i--) {
+            const poop = fallingPoop[i];
+            poop.y++;
+            
+            // 大便落到底部时停止掉落
+            if (poop.y >= tileCount - 1) {
+                poop.falling = false;
+            }
+            
+            // 检查与蛇的碰撞
+            for (let segment of snake) {
+                if (poop.x === segment.x && poop.y === segment.y) {
+                    if (currentLevel === 5) {
+                        // 隐藏关卡：吃大便减长度
+                        if (snake.length > 1) {
+                            snake.pop(); // 减少一节身体
+                            updateDebug('来福吃了掉落的大便，身体变短了！');
+                            // 移除这个大便
+                            fallingPoop.splice(i, 1);
+                        } else {
+                            // 只剩头部时游戏结束
+                            gameOver('来福只剩头部还吃大便，被妈妈抓住了！');
+                            return;
+                        }
+                    } else {
+                        gameOver('来福吃了大便被妈妈打了一顿');
+                        return;
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('更新掉落大便失败:', error);
+    }
+}
+
 // 全局错误处理
 window.addEventListener('error', function(e) {
     console.error('全局错误:', e.error);
     updateDebug('发生错误: ' + e.message);
 });
+        // 确保函数全局可访问
+        window.showLevelSelect = showLevelSelect;
+        window.startQuickGame = startQuickGame;
+        window.resetProgress = resetProgress;
     </script>
 </body>
 </html>
