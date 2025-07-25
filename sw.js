@@ -2,12 +2,12 @@ const CACHE_NAME = 'snake-game-v1';
 const urlsToCache = [
   './snake-game.html',
   './manifest.json',
-  './.vercel/dog1.jpg.jpg',
-  './.vercel/dog2.jpg.png',
-  './.vercel/dog4.jpg.jpg',
-  './.vercel/dog5.jpg.jpg',
-  './.vercel/dog6.jpg.jpg',
-  './.vercel/dog7.jpg.jpg'
+  './dog1.jpg.jpg',
+  './dog2.jpg.png',
+  './dog4.jpg.jpg',
+  './dog5.jpg.jpg',
+  './dog6.jpg.jpg',
+  './dog7.jpg.jpg'
 ];
 
 self.addEventListener('install', function(event) {
