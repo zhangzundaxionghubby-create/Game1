@@ -1320,15 +1320,7 @@ function moveSnake() {
             }
         }
         
-        // 检查自身碰撞 - 修复版本
-        for (let i = 1; i < snake.length; i++) { // 从索引1开始，跳过头部
-            const segment = snake[i];
-            if (head.x === segment.x && head.y === segment.y) {
-                gameOverReason = '来福咬到了自己的尾巴';
-                gameOver(gameOverReason);
-                return;
-            }
-        }
+
         
         snake.unshift(head);
         
